@@ -1,9 +1,10 @@
+DROP DATABASE IF EXISTS qna;
 CREATE DATABASE qna;
 
 \c qna;
 
 CREATE TABLE IF NOT EXISTS questions(
-  id serial NOT NULL PRIMARY KEY,
+  id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   product_id integer NOT NULL,
   body text NOT NULL,
   date_written bigint,
@@ -14,7 +15,7 @@ CREATE TABLE IF NOT EXISTS questions(
 );
 
 CREATE TABLE IF NOT EXISTS answers(
-  id serial NOT NULL PRIMARY KEY,
+  id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   question_id integer REFERENCES questions(id),
   body text NOT NULL,
   date_written bigint,
@@ -25,15 +26,16 @@ CREATE TABLE IF NOT EXISTS answers(
 );
 
 CREATE TABLE IF NOT EXISTS photos(
-  id serial NOT NULL PRIMARY KEY,
+  id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   answer_id integer REFERENCES answers(id),
   url text
 );
 
-ALTER TABLE questions ADD INDEX product_index (product_id);
-ALTER TABLE answers ADD INDEX question_index (question_id);
-ALTER TABLE photos ADD INDEX answer_index (answer_id);
+CREATE INDEX product_index ON questions(product_id);
+CREATE INDEX question_index ON answers(question_id);
+CREATE INDEX answer_index ON photos(answer_id);
 
 \COPY questions FROM 'data/questions.csv' DELIMITER ',' csv header;
 \COPY answers FROM 'data/answers.csv' DELIMITER ',' csv header;
 \COPY photos FROM 'data/answers_photos.csv' DELIMITER ',' csv header;
+

@@ -9,6 +9,8 @@ const db = new Pool({
   port: process.env.PORT
 });
 
-db.connect();
+db.on('error', error => {
+  console.error('idle client error:', error);
+});
 
 module.exports = db
