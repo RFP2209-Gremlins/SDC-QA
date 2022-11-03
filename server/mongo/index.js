@@ -23,7 +23,7 @@ const questionsSchema = new mongoose.Schema({
   asker_email: String,
   reported: Boolean,
   helpful: Number,
-  answers: [answerSchema]
+  answers: [answersSchema]
 });
 
 const Answers = mongoose.model('Answers', answersSchema);
