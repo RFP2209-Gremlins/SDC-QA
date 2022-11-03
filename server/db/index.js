@@ -6,11 +6,7 @@ const db = new Pool({
   host: process.env.HOST,
   database: process.env.DB,
   password: process.env.PW,
-  port: process.env.PORT
-});
-
-db.on('error', error => {
-  console.error('idle client error:', error);
+  port: process.env.dbPORT
 });
 
 module.exports = db
