@@ -61,7 +61,7 @@ router.get('/qa/:question_id/answers', (req, res) => {
           'id', id,
           'url', url
         )) FROM photos WHERE answer_id = answers.id)
-        )) FROM answers WHERE question_id = $1)
+        )) FROM answers WHERE question_id = $1 AND reported = false)
   )`
 
   db.query(query, [req.params.question_id])
@@ -89,7 +89,7 @@ router.post('/qa/:question_id/answers', (req, res) => {
     .catch(e => {console.log('post /qa/:question_id/answers error', e); res.status(500).send(e)})
 })
 
-router.put('/qa/:question_id/helpful', (req, res) => {
+router.put('/qa/questions/:question_id/helpful', (req, res) => {
   const query = `
     UPDATE questions
     SET helpful = helpful+1
@@ -97,23 +97,23 @@ router.put('/qa/:question_id/helpful', (req, res) => {
   `
 
   db.query(query, [req.params.question_id])
-  .then(data => {res.status(204)})
-  .catch(e => {console.log('put /qa/:question_id/helpful error', e); res.status(500).send(e)})
+  .then(data => {res.status(204).send()})
+  .catch(e => {console.log('put /qa/questions/:question_id/helpful error', e); res.status(500).send(e)})
 })
 
-router.put('/qa/:question_id/report', (req, res) => {
+router.put('/qa/questions/:question_id/report', (req, res) => {
   const query = `
     UPDATE questions
-    SET report = true
+    SET reported = true
     WHERE id = $1
   `
 
   db.query(query, [req.params.question_id])
-  .then(data => {res.status(204)})
-  .catch(e => {console.log('put /qa/:question_id/report error', e); res.status(500).send(e)})
+  .then(data => {res.status(204).send()})
+  .catch(e => {console.log('put /qa/questions/:question_id/report error', e); res.status(500).send(e)})
 })
 
-router.put('/qa/:answer_id/helpful', (req, res) => {
+router.put('/qa/answers/:answer_id/helpful', (req, res) => {
   const query = `
     UPDATE answers
     SET helpful = helpful+1
@@ -121,20 +121,20 @@ router.put('/qa/:answer_id/helpful', (req, res) => {
   `
 
   db.query(query, [req.params.answer_id])
-  .then(data => {res.status(204)})
-  .catch(e => {console.log('put /qa/:answer_id/helpful error', e); res.status(500).send(e)})
+  .then(data => {res.status(204).send()})
+  .catch(e => {console.log('put /qa/answers/:answer_id/helpful error', e); res.status(500).send(e)})
 })
 
-router.put('/qa/:answer_id/report', (req, res) => {
+router.put('/qa/answers/:answer_id/report', (req, res) => {
   const query = `
     UPDATE answers
-    SET report = true
+    SET reported = true
     WHERE id = $1
   `
 
   db.query(query, [req.params.answer_id])
-  .then(data => {res.status(204)})
-  .catch(e => {console.log('put /qa/:answer_id/report error', e); res.status(500).send(e)})
+  .then(data => {res.status(204).send()})
+  .catch(e => {console.log('put /qa/answers/:answer_id/report error', e); res.status(500).send(e)})
 })
 
 module.exports = router;
