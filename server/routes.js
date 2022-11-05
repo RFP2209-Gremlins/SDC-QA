@@ -6,7 +6,7 @@ router.get('/', (req, res) => {
 })
 
 router.get('/qa/questions', (req, res) => {
-  const page = req.query.page || 1
+  const page = req.query.page || 0
   const count = req.query.count || 5
 
   const query =`
@@ -46,11 +46,13 @@ router.post('/qa/questions', (req, res) => {
 })
 
 router.get('/qa/:question_id/answers', (req, res) => {
+  let page  = parseInt(req.query.page) || 0
+  let count = parseInt(req.query.count) || 5
   const query = `
     SELECT json_build_object(
       'question', ${req.params.question_id},
-      'page', ${req.query.page || 1},
-      'count', ${req.query.count || 5},
+      'page', ${page},
+      'count', ${count},
       'results', (SELECT json_agg(json_build_object(
         'answer_id', id,
         'body', body,
@@ -61,10 +63,10 @@ router.get('/qa/:question_id/answers', (req, res) => {
           'id', id,
           'url', url
         )) FROM photos WHERE answer_id = answers.id)
-        )) FROM answers WHERE question_id = $1 AND reported = false)
+        )) FROM answers WHERE question_id = $1 AND reported = false BETWEEN $2 and $3)
   )`
 
-  db.query(query, [req.params.question_id])
+  db.query(query, [req.params.question_id, page, count])
   .then(data => {res.status(200).send(data.rows[0].json_build_object)})
   .catch(e => {console.log('get /qa/:question_id/answers error', e); res.status(500).send(e)})
 })
