@@ -15,14 +15,14 @@ router.get('/qa/questions', (req, res) => {
       'results', (SELECT json_agg(json_build_object(
           'question_id', id,
           'question_body', body,
-          'question_date', to_timestamp(date_written/1000) ,
+          'question_date', date_written,
           'asker_name', asker_name,
           'question_helpfulness', helpful,
           'reported', ${false},
           'answers', (SELECT json_agg(json_build_object(
             'id', id,
             'body', body,
-            'date', to_timestamp(date_written/1000),
+            'date', date_written,
             'answerer_name', answerer_name,
             'helpfulness', helpful,
             'photos', (SELECT json_agg(json_build_object(
@@ -40,7 +40,7 @@ router.get('/qa/questions', (req, res) => {
 
 router.post('/qa/questions', (req, res) => {
   const query = 'INSERT INTO questions (product_id, body, date_written, asker_name, asker_email, reported, helpful) VALUES ($1, $2, $3, $4, $5, $6, $7)'
-  db.query(query, [parseInt(req.body.product_id), req.body.body, new Date().getTime(), req.body.asker_name, req.body.asker_email, false, 0])
+  db.query(query, [parseInt(req.body.product_id), req.body.body, new Date().toISOString(), req.body.asker_name, req.body.asker_email, false, 0])
     .then(data => {res.status(201).send('CREATED')})
     .catch(e => {console.log('post /qa/questions error', e); res.status(500).send(e)})
 })
@@ -54,7 +54,7 @@ router.get('/qa/:question_id/answers', (req, res) => {
       'results', (SELECT json_agg(json_build_object(
         'answer_id', id,
         'body', body,
-        'date', to_timestamp(date_written/1000),
+        'date', date_written,
         'answerer_name', answerer_name,
         'helpfulness', helpful,
         'photos', (SELECT json_agg(json_build_object(
@@ -78,10 +78,10 @@ router.post('/qa/:question_id/answers', (req, res) => {
       WITH ins1 AS (INSERT INTO answers (question_id, body, date_written, answerer_name, answerer_email, reported, helpful) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id)
       INSERT INTO photos (answer_id,url) VALUES ((SELECT id FROM ins1), unnest(cast($8 as text[])))
     `
-    parameters = [req.params.question_id, req.body.body, new Date().getTime(), req.body.name, req.body.email, false, 0, req.body.photos]
+    parameters = [req.params.question_id, req.body.body, new Date().toISOString(), req.body.name, req.body.email, false, 0, req.body.photos]
   } else {
     query = 'INSERT INTO answers (question_id, body, date_written, answerer_name, answerer_email, reported, helpful) VALUES ($1, $2, $3, $4, $5, $6, $7)'
-    parameters = [req.params.question_id, req.body.body, new Date().getTime(), req.body.name, req.body.email, false, 0]
+    parameters = [req.params.question_id, req.body.body, new Date().toISOString(), req.body.name, req.body.email, false, 0]
   }
 
   db.query(query,parameters)

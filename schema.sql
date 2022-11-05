@@ -42,3 +42,6 @@ CREATE INDEX answer_index ON photos(answer_id);
 SELECT setval('answers_id_seq', (SELECT MAX(id) FROM answers)+1);
 SELECT setval('photos_id_seq', (SELECT MAX(id) FROM photos)+1);
 SELECT setval('questions_id_seq', (SELECT MAX(id) FROM questions)+1);
+
+ALTER TABLE questions ALTER COLUMN date_written TYPE TIMESTAMP USING to_timestamp(date_written/1000);
+ALTER TABLE answers ALTER COLUMN date_written TYPE TIMESTAMP USING to_timestamp(date_written/1000);
