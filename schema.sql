@@ -39,3 +39,6 @@ CREATE INDEX answer_index ON photos(answer_id);
 \COPY answers FROM 'data/answers.csv' DELIMITER ',' csv header;
 \COPY photos FROM 'data/answers_photos.csv' DELIMITER ',' csv header;
 
+SELECT setval('answers_id_seq', (SELECT MAX(id) FROM answers)+1);
+SELECT setval('photos_id_seq', (SELECT MAX(id) FROM photos)+1);
+SELECT setval('questions_id_seq', (SELECT MAX(id) FROM questions)+1);

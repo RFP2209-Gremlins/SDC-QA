@@ -15,14 +15,14 @@ router.get('/qa/questions', (req, res) => {
       'results', (SELECT json_agg(json_build_object(
           'question_id', id,
           'question_body', body,
-          'question_date', to_timestamp(CAST(date_written as bigint)/1000),
+          'question_date', to_timestamp(date_written/1000) ,
           'asker_name', asker_name,
           'question_helpfulness', helpful,
           'reported', ${false},
           'answers', (SELECT json_agg(json_build_object(
             'id', id,
             'body', body,
-            'date', to_timestamp(CAST(date_written as bigint)/1000),
+            'date', to_timestamp(date_written/1000),
             'answerer_name', answerer_name,
             'helpfulness', helpful,
             'photos', (SELECT json_agg(json_build_object(
@@ -54,7 +54,7 @@ router.get('/qa/:question_id/answers', (req, res) => {
       'results', (SELECT json_agg(json_build_object(
         'answer_id', id,
         'body', body,
-        'date', to_timestamp(CAST(date_written as bigint)/1000),
+        'date', to_timestamp(date_written/1000),
         'answerer_name', answerer_name,
         'helpfulness', helpful,
         'photos', (SELECT json_agg(json_build_object(
@@ -67,6 +67,26 @@ router.get('/qa/:question_id/answers', (req, res) => {
   db.query(query, [req.params.question_id])
   .then(data => {res.status(200).send(data.rows[0].json_build_object)})
   .catch(e => {console.log('get /qa/:question_id/answers error', e); res.status(500).send(e)})
+})
+
+router.post('/qa/:question_id/answers', (req, res) => {
+  let query = ''
+  let parameters = []
+
+  if (req.body.photos.length !== 2){
+    query = `
+      WITH ins1 AS (INSERT INTO answers (question_id, body, date_written, answerer_name, answerer_email, reported, helpful) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id)
+      INSERT INTO photos (answer_id,url) VALUES ((SELECT id FROM ins1), unnest(cast($8 as text[])))
+    `
+    parameters = [req.params.question_id, req.body.body, new Date().getTime(), req.body.name, req.body.email, false, 0, req.body.photos]
+  } else {
+    query = 'INSERT INTO answers (question_id, body, date_written, answerer_name, answerer_email, reported, helpful) VALUES ($1, $2, $3, $4, $5, $6, $7)'
+    parameters = [req.params.question_id, req.body.body, new Date().getTime(), req.body.name, req.body.email, false, 0]
+  }
+
+  db.query(query,parameters)
+    .then(data => {res.status(201).send('CREATED')})
+    .catch(e => {console.log('post /qa/:question_id/answers error', e); res.status(500).send(e)})
 })
 
 router.put('/qa/:question_id/helpful', (req, res) => {
@@ -118,11 +138,3 @@ router.put('/qa/:answer_id/report', (req, res) => {
 })
 
 module.exports = router;
-
-// router.post('/qa/:question_id/answers')
-
-// router.put('/qa/:question_id/helpful')
-// router.put('/qa/:question_id/report')
-
-// router.put('/qa/answers/:answer_id/helpful')
-// router.put('/qa/answers/:answer_id/report')
