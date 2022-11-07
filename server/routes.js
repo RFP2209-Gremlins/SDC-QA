@@ -6,8 +6,9 @@ router.get('/', (req, res) => {
 })
 
 router.get('/qa/questions', (req, res) => {
-  const page = req.query.page || 0
-  const count = req.query.count || 5
+  const page = parseInt(req.query.page) || 1
+  const count = parseInt(req.query.count) || 5
+  const offset = (page-1) * count
 
   const query =`
     SELECT json_build_object(
@@ -28,10 +29,10 @@ router.get('/qa/questions', (req, res) => {
             'helpfulness', helpful,
             'photos', (SELECT COALESCE(json_agg(photos.url), '[]'::json) FROM photos WHERE answer_id = answers.id)
           )), '{}'::json) FROM answers WHERE question_id = questions.id AND reported = false)
-        )) FROM questions WHERE product_id = $1 AND reported = false)
+        )) FROM questions WHERE product_id = $1 AND reported = false LIMIT 0)
     )`
 
-  db.query(query, [req.query.product_id])
+  db.query(query, [req.query.product_id, offset, count])
     .then(data => {res.status(200).send(data.rows[0].json_build_object)})
     .catch(e => {console.log('get /qa/questions error', e); res.status(500).send(e)})
 })
@@ -45,8 +46,10 @@ router.post('/qa/questions', (req, res) => {
 })
 
 router.get('/qa/questions/:question_id/answers', (req, res) => {
-  let page  = parseInt(req.query.page) || 0
-  let count = parseInt(req.query.count) || 5
+  const page = parseInt(req.query.page) || 1
+  const count = parseInt(req.query.count) || 5
+  const offset = (page-1) * count
+
   const query = `
     SELECT json_build_object(
       'question', ${req.params.question_id},
@@ -65,7 +68,7 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
         )), '{}'::json) FROM answers WHERE question_id = $1 AND reported = false)
   )`
 
-  db.query(query, [req.params.question_id])
+  db.query(query, [req.params.question_id, offset, count])
   .then(data => {res.status(200).send(data.rows[0].json_build_object)})
   .catch(e => {console.log('get /qa/:question_id/answers error', e); res.status(500).send(e)})
 })
