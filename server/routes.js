@@ -1,3 +1,4 @@
+
 const router = require('express').Router();
 const db = require('./postgres');
 
@@ -13,7 +14,9 @@ router.get('/qa/questions', (req, res) => {
   const query =`
     SELECT json_build_object(
       'product_id', ${req.query.product_id},
-      'results', (SELECT json_agg(json_build_object(
+      'results', (
+        WITH ques AS ( SELECT * FROM questions WHERE product_id = $1 AND reported = false LIMIT $2 OFFSET $3 )
+        SELECT json_agg(json_build_object(
           'question_id', id,
           'question_body', body,
           'question_date', date_written,
@@ -28,11 +31,11 @@ router.get('/qa/questions', (req, res) => {
             'answerer_name', answerer_name,
             'helpfulness', helpful,
             'photos', (SELECT COALESCE(json_agg(photos.url), '[]'::json) FROM photos WHERE answer_id = answers.id)
-          )), '{}'::json) FROM answers WHERE question_id = questions.id AND reported = false)
-        )) FROM questions WHERE product_id = $1 AND reported = false LIMIT 0)
+          )), '{}'::json) FROM answers WHERE question_id = ques.id AND reported = false)
+        )) FROM ques)
     )`
 
-  db.query(query, [req.query.product_id, offset, count])
+  db.query(query, [req.query.product_id, count, offset])
     .then(data => {res.status(200).send(data.rows[0].json_build_object)})
     .catch(e => {console.log('get /qa/questions error', e); res.status(500).send(e)})
 })
@@ -51,6 +54,7 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
   const offset = (page-1) * count
 
   const query = `
+    WITH ans AS ( SELECT * FROM answers WHERE question_id = $1 AND reported = false LIMIT $2 OFFSET $3 )
     SELECT json_build_object(
       'question', ${req.params.question_id},
       'page', ${page},
@@ -64,11 +68,11 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
         'photos', (SELECT COALESCE (json_agg(json_build_object(
           'id', id,
           'url', url
-        )), '[]'::json) FROM photos WHERE answer_id = answers.id)
-        )), '{}'::json) FROM answers WHERE question_id = $1 AND reported = false)
+        )), '[]'::json) FROM photos WHERE answer_id = ans.id)
+        )), '{}'::json) FROM ans)
   )`
 
-  db.query(query, [req.params.question_id, offset, count])
+  db.query(query, [req.params.question_id, count, offset])
   .then(data => {res.status(200).send(data.rows[0].json_build_object)})
   .catch(e => {console.log('get /qa/:question_id/answers error', e); res.status(500).send(e)})
 })
