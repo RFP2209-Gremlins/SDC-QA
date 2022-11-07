@@ -19,7 +19,7 @@ router.get('/qa/questions', (req, res) => {
           'asker_name', asker_name,
           'question_helpfulness', helpful,
           'reported', ${false},
-          'answers', (SELECT json_object_agg(
+          'answers', (SELECT COALESCE (json_object_agg(
             id, json_build_object(
             'id', id,
             'body', body,
@@ -27,7 +27,7 @@ router.get('/qa/questions', (req, res) => {
             'answerer_name', answerer_name,
             'helpfulness', helpful,
             'photos', (SELECT COALESCE(json_agg(photos.url), '[]'::json) FROM photos WHERE answer_id = answers.id)
-          )) FROM answers WHERE question_id = questions.id AND reported = false)
+          )), '{}'::json) FROM answers WHERE question_id = questions.id AND reported = false)
         )) FROM questions WHERE product_id = $1 AND reported = false)
     )`
 
@@ -52,7 +52,7 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
       'question', ${req.params.question_id},
       'page', ${page},
       'count', ${count},
-      'results', (SELECT json_agg(json_build_object(
+      'results', (SELECT COALESCE (json_agg(json_build_object(
         'answer_id', id,
         'body', body,
         'date', date_written,
@@ -62,7 +62,7 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
           'id', id,
           'url', url
         )), '[]'::json) FROM photos WHERE answer_id = answers.id)
-        )) FROM answers WHERE question_id = $1 AND reported = false)
+        )), '{}'::json) FROM answers WHERE question_id = $1 AND reported = false)
   )`
 
   db.query(query, [req.params.question_id])
