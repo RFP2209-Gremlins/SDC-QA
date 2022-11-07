@@ -24,6 +24,12 @@ describe('/qa/questions?product_id=1 returns an array of results', () => {
       })
       .catch(err => { throw (err); });
   });
+
+  it('when count is specified, return (count) number of results', () => {
+    axios.get(`${URL}/qa/questions?product_id=1&count=1`)
+      .then(res => { expect(res.data.results.length).toBe(1) })
+      .catch(err => { throw (err); });
+  });
 });
 
 describe('/qa/questions/1/answers returns an object containing the question answers', () => {
@@ -46,4 +52,12 @@ describe('/qa/questions/1/answers returns an object containing the question answ
       })
       .catch(err => { throw (err); });
   });
+
+  it('when count is specified, return (count) number of results', () => {
+    axios.get(`${URL}/qa/questions/1/answers?count=1`)
+      .then(res => { expect(res.data.results.length).toBe(1) })
+      .catch(err => { throw (err); });
+  });
+
 });
+
