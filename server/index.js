@@ -2,7 +2,8 @@ const dotenv = require('dotenv').config()
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT;
-const router = require('./routes.js')
+const router = require('./routes.js');
+const db = require('./postgres');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true} ));
